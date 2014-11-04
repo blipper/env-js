@@ -53,10 +53,12 @@ Envjs.listeners = function(event){
 };
 
 Envjs.emit = function(event /*, arg1, arg2, etc*/ ){
+	java.lang.System.out.println(event);
     eventQueue.push({event:event, args:arguments});
 };
 
 setTimeout  = require('envjs/timer').setTimeout;
+
 
 var $warming = 10;
 
@@ -73,7 +75,8 @@ Envjs.tick = function(){
 
             if('exit' === next.event){
                 log.info('exiting');
-                Envjs.exit();
+                //Envjs.exit();
+                
             }
             for(y = 0; y < eventListeners[next.event].length; y++){
                 log.debug('event %s %s', y, next.event);

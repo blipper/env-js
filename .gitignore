@@ -20,3 +20,4 @@ java_pid*
 # emacs turds
 \#*
 
+/build

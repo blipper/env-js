@@ -185,6 +185,7 @@ Envjs.Logging = {};
          * @type String
          */
         append: function(level, category, message){
+        	java.lang.System.out.println(message);
             switch(level){
                 case ("DEBUG"):
                     console.log.apply(console, this.formatter.format(level, category, message));

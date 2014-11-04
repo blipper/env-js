@@ -64,7 +64,8 @@
     <property name="SPYDERMONKEY_DIST"	location="${DIST_DIR}/platform/spydermonkey.js" />
     <property name="RUBYRACER_DIST"		location="${DIST_DIR}/platform/rubyracer.js" />
     <property name="JOHNSON_DIST"		location="${DIST_DIR}/platform/johnson.js" />
-    <property name="CONSOLE_DIST"   	location="${DIST_DIR}/console.js" />
+    <property name="NASHORN_DIST"		location="${DIST_DIR}/platform/nashorn.js" />
+	<property name="CONSOLE_DIST"   	location="${DIST_DIR}/console.js" />
     <property name="DOM_DIST"       	location="${DIST_DIR}/dom.js" />
     <property name="EVENT_DIST"     	location="${DIST_DIR}/event.js" />
     <property name="TIMER_DIST"     	location="${DIST_DIR}/timer.js" />
@@ -80,7 +81,9 @@
     <property name="ENV_SPYDERMONKEY"	location="${DIST_DIR}/env.spydermonkey.js"/>
     <property name="ENV_RUBYRACER"   	location="${DIST_DIR}/env.rubyracer.js"/>
     <property name="ENV_JOHNSON"   		location="${DIST_DIR}/env.johnson.js"/>
+    <property name="ENV_NASHORN"   		location="${DIST_DIR}/env.nashorn.js"/>
 
+	
     <echo message="     'DISTRIBUTABLES': {"/>
     <echo message="         'CORE_DIST':    '${CORE_DIST}',"/>
     <echo message="         'RHINO_DIST':   '${RHINO_DIST}',"/>
@@ -332,6 +335,34 @@
         <echo message=""/>
     </target>
 
+	<target name="nashorn-env">
+        <mkdir dir="${DIST_DIR}/platform" />
+        <echo message=""/>
+        <echo message="Building ${NASHORN_DIST}" />
+        <concat destfile="${NASHORN_DIST}">
+            <filterchain>
+                <replacetokens>
+                    <token key="VERSION" value="nashorn-env.${BUILD_VERSION}"/>
+                    <token key="BUILD_VERSION" value="${BUILD_VERSION}"/>
+                </replacetokens>
+            </filterchain>
+            <fileset dir="${SRC_DIR}" includes="platform/nashorn/__global__.js" />
+            <fileset dir="${SRC_DIR}" includes="common/intro.js" />
+            <fileset dir="${SRC_DIR}" includes="common/__extend__.js" />
+            <fileset dir="${SRC_DIR}" includes="platform/nashorn/console.js" />
+            <fileset dir="${SRC_DIR}" includes="platform/nashorn/html.js" />
+            <fileset dir="${SRC_DIR}" includes="platform/nashorn/timer.js" />
+            <fileset dir="${SRC_DIR}" includes="platform/nashorn/window.js" />
+            <fileset dir="${SRC_DIR}" includes="platform/nashorn/xhr.js" />
+            <fileset dir="${SRC_DIR}" includes="common/outro.js" />
+        </concat>
+		<copy file="${SRC_DIR}/platform/nashorn/require.js"
+              tofile="${DIST_DIR}/nashorn.js" />
+        <echo message="Finished Building ${NASHORN_DIST}"/>
+        <echo message=""/>
+    </target>
+	
+	
     <!-- BUILD CONSOLE IMPLEMENTATIOM -->
     <target name="console">
         <mkdir dir="${DIST_DIR}" />
@@ -856,7 +887,7 @@
     <target description="Main ENV concatenator"
             name="zip"
             depends="core-env, rhino-env, node-env, spydermonkey-env,
-					 rubyracer-env, johnson-env,
+					 rubyracer-env, johnson-env, nashorn-env,
                      console, dom, event, timer,
                      html, parser, xhr,
                      css,  window">

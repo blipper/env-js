@@ -1,17 +1,17 @@
 /*
- * Envjs rhino-env.1.3.pre03
+ * Envjs nashorn-env.1.3.pre03
  * Pure JavaScript Browser Environment
  * By John Resig <http://ejohn.org/> and the Envjs Team
  * Copyright 2008-2010 John Resig, under the MIT License
  */
 
+var __context__ = Packages.jdk.nashorn.internal.runtime.Context.getContext();
+
 var Envjs = Envjs || 
 	require('envjs/platform/core').Envjs;
 	require('local_settings');
 
-var __context__ = Packages.org.mozilla.javascript.Context.getCurrentContext();
-
-Envjs.platform       = "Rhino";
+Envjs.platform       = "Nashorn";
 Envjs.revision       = "1.7.0.rc2";
 Envjs.argv = [];
 if(__argv__ && __argv__.length){
@@ -21,11 +21,17 @@ if(__argv__ && __argv__.length){
 }
 
 Envjs.exit = function(){
+	console.log("Exiting!");
 	java.lang.System.exit(0);
 };
 
+// Loads the Mozilla Compatible Functions
+// Used throughout 
+load("nashorn:mozilla_compat.js");
+
+
 /*
- * Envjs rhino-env.1.3.pre03 
+ * Envjs nashorn-env.1.3.pre03 
  * Pure JavaScript Browser Environment
  * By John Resig <http://ejohn.org/> and the Envjs Team
  * Copyright 2008-2010 John Resig, under the MIT License
@@ -74,15 +80,28 @@ function __extend__(a,b) {
  */
 (function(){
 	
-Envjs.log = print;
+/**
+ * Prints stack trace of current execution point
+ */
+Envjs.trace = function(){try {throw new Error();} catch (e) { e.printStackTrace(); } };
+	
+Envjs.log = function(msg){
+	java.lang.System.out.println(msg);
+	try {
+	jmlog.info(msg);
+	}
+	catch (e) {
+		java.lang.System.out.println(e);		
+	}
+};
 
 Envjs.lineSource = function(e){
-    return e&&e.rhinoException?e.rhinoException.lineSource():"(line ?)";
+    return e&&Object.prototype.toString.call(e)=="[object Error]"?e.lineNumber:"(line ?)";
 };
 
 var $in, log; 
 Envjs.readConsole = function(){
-	log = log||Envjs.logger('Envjs.Rhino');
+	log = log||Envjs.logger('Envjs.Nashorn');
 	$in = $in||new java.io.BufferedReader(
 		new java.io.InputStreamReader(java.lang.System['in'])
 	);
@@ -98,63 +117,58 @@ Envjs.prompt = function(){
 
 (function(){
 
-var log = Envjs.logger('Envjs.HTML.Rhino');
+var log = Envjs.logger('Envjs.HTML.Nashorn');
+
 
 Envjs.eval = function(context, source, name){
-    //console.log('evaluating javascript source %s', source.substring(0,64));
-	return  __context__.evaluateString(
-        context,
-        source,
-        name,
-        0,
-        null
-    );
+    __context__.eval(context, source, null, name, false);
 };
 
-}());Envjs.renderSVG = function(svgstring, url){
-    //console.log("svg template url %s", templateSVG);
-    // Create a JPEG transcoder
-    var t = new Packages.org.apache.batik.transcoder.image.JPEGTranscoder();
-
-    // Set the transcoding hints.
-    t.addTranscodingHint(
-        Packages.org.apache.batik.transcoder.image.JPEGTranscoder.KEY_QUALITY,
-        new java.lang.Float(1.0));
-    // Create the transcoder input.
-    var input = new Packages.org.apache.batik.transcoder.TranscoderInput(
-        new java.io.StringReader(svgstring));
-
-    // Create the transcoder output.
-    var ostream = new java.io.ByteArrayOutputStream();
-    var output = new Packages.org.apache.batik.transcoder.TranscoderOutput(ostream);
-
-    // Save the image.
-    t.transcode(input, output);
-
-    // Flush and close the stream.
-    ostream.flush();
-    ostream.close();
-    
-	var out = new java.io.FileOutputStream(new java.io.File(new java.net.URI(url.toString())));
-	try{
-    	out.write( ostream.toByteArray() );
-	}catch(e){
-		
-	}finally{
-    	out.flush();
-    	out.close();
-    }
-};
+}());	
 (function(){
 
-var log = Envjs.logger('Envjs.Timer.Rhino');
+var log = Envjs.logger('Envjs.Timer.Nashorn');
+
+/*
+public static Object spawn(Context cx, Scriptable thisObj, Object[] args,
+                          Function funObj)
+{
+   Scriptable scope = funObj.getParentScope();
+   Runner runner;
+   if (args.length != 0 && args[0] instanceof Function) {
+       Object[] newArgs = null;
+       if (args.length > 1 && args[1] instanceof Scriptable) {
+           newArgs = cx.getElements((Scriptable) args[1]);
+       }
+       if (newArgs == null) { newArgs = ScriptRuntime.emptyArgs; }
+       runner = new Runner(scope, (Function) args[0], newArgs);
+   } else if (args.length != 0 && args[0] instanceof Script) {
+       runner = new Runner(scope, (Script) args[0]);
+   } else {
+       throw reportRuntimeError("msg.spawn.args");
+   }
+   runner.factory = cx.getFactory();	
+   Thread thread = new Thread(runner);
+   thread.start();
+   return thread;
+}
+*/
+// Does not support arguments at this time
+var spawn = function(fn) {
+	thread = new Thread(addition);
+	thread.start();
+	return thread;
+} ;
+
+
 /**
- * Rhino provides a very succinct 'sync'
- * @param {Function} fn
+ * Nashron provides a very succinct 'sync' via the mozilla_compat.js
+ * @param {Function} f		n
  */
 try{
     Envjs.sync = sync;
     Envjs.spawn = spawn;
+    console.log("sync and spawn are available");
 	//print('sync and spawn are available');
 } catch(e){	
 	//print('sync and spawn are not available : ' + e);
@@ -177,34 +191,71 @@ try{
  */
 Envjs.sleep = function(milliseconds){
     try{
-        return java.lang.Thread.currentThread().sleep(milliseconds);
+        return java.lang.Thread.sleep(milliseconds);
     }catch(e){
-        console.log('Threadless platform, cannot sleep.');
+        console.log('Threadless platform, cannots sleep.');
     }
 };
 
 /**
  * provides callback hook for when the system exits
+ * Not supported
  */
 Envjs.onExit = function(callback){
-    var rhino = Packages.org.mozilla.javascript,
-        contextFactory =  __context__.getFactory(),
-        listener = new rhino.ContextFactory.Listener({
-            contextReleased: function(context){
-                if(context === __context__)
-                    console.log('context released', context);
-                contextFactory.removeListener(this);
-                if(callback)
-                    callback();
-            }
-        });
-    contextFactory.addListener(listener);
+    console.log('onExit not supported.');
+    try {
+        throw new Error();
+    } catch (e) {
+    	console.log(e.stack)
+        console.log(e.lineNumber)
+        console.log(e.columnNumber)
+        console.log(e.fileName)
+    }    
+};
+
+}());
+
+(function(){
+
+var log = Envjs.logger('Envjs.Window.Nashorn');
+
+//Since we're running in rhino I guess we can safely assume
+//java is 'enabled'.  I'm sure this requires more thought
+//than I've given it here
+Envjs.javaEnabled = true;
+
+Envjs.homedir        = java.lang.System.getProperty("user.home");
+Envjs.tmpdir         = java.lang.System.getProperty("java.io.tmpdir");
+Envjs.os_name        = java.lang.System.getProperty("os.name");
+Envjs.os_arch        = java.lang.System.getProperty("os.arch");
+Envjs.os_version     = java.lang.System.getProperty("os.version");
+Envjs.lang           = java.lang.System.getProperty("user.lang");
+
+
+Envjs.gc = function(){ };
+
+/**
+ * Makes an object window-like by proxying object accessors
+ * @param {Object} scope
+ * @param {Object} parent
+ */
+Envjs.proxy = function(scope, parent) {
+    try{
+        if(scope+'' == '[object global]'){
+            return scope;
+        }else{
+            return  __context__.createGlobal();
+        }
+    }catch(e){
+        console.log('failed to init standard objects %s %s \n%s', scope, parent, e);
+    }
+
 };
 
 }());
 (function(){
 
-var log = Envjs.logger('Envjs.XMLHttpRequest.Rhino');
+var log = Envjs.logger('Envjs.XMLHttpRequest.Nashorn');
 
 /**
  * Get 'Current Working Directory'
@@ -291,7 +342,7 @@ Envjs.deleteFile = function(url){
  * @param {Object} data
  */
 Envjs.connection = function(xhr, responseHandler, data){
-    var url = java.net.URL(xhr.url),
+    var url = new java.net.URL(xhr.url),
         connection,
         header,
         outstream,
@@ -310,7 +361,7 @@ Envjs.connection = function(xhr, responseHandler, data){
     } else {
         connection = url.openConnection();
         //handle redirects manually since cookie support sucks out of the box
-        connection.setFollowRedirects(false);
+        //connection.setFollowRedirects(false);
         connection.setRequestMethod( xhr.method );
 
         // Add headers to Java connection
@@ -422,45 +473,6 @@ Envjs.connection = function(xhr, responseHandler, data){
 
 }());
 
-
-(function(){
-
-var log = Envjs.logger('Envjs.Window.Rhino');
-
-//Since we're running in rhino I guess we can safely assume
-//java is 'enabled'.  I'm sure this requires more thought
-//than I've given it here
-Envjs.javaEnabled = true;
-
-Envjs.homedir        = java.lang.System.getProperty("user.home");
-Envjs.tmpdir         = java.lang.System.getProperty("java.io.tmpdir");
-Envjs.os_name        = java.lang.System.getProperty("os.name");
-Envjs.os_arch        = java.lang.System.getProperty("os.arch");
-Envjs.os_version     = java.lang.System.getProperty("os.version");
-Envjs.lang           = java.lang.System.getProperty("user.lang");
-
-
-Envjs.gc = function(){ gc(); };
-
-/**
- * Makes an object window-like by proxying object accessors
- * @param {Object} scope
- * @param {Object} parent
- */
-Envjs.proxy = function(scope, parent) {
-    try{
-        if(scope+'' == '[object global]'){
-            return scope;
-        }else{
-            return  __context__.initStandardObjects();
-        }
-    }catch(e){
-        console.log('failed to init standard objects %s %s \n%s', scope, parent, e);
-    }
-
-};
-
-}());
 /**
  * @author john resig & the envjs team
  * @uri http://www.envjs.com/

@@ -1,210 +1,7 @@
-/*
- * Envjs rhino-env.1.3.pre03
- * Pure JavaScript Browser Environment
- * By John Resig <http://ejohn.org/> and the Envjs Team
- * Copyright 2008-2010 John Resig, under the MIT License
- */
-
-var Envjs = Envjs || 
-	require('envjs/platform/core').Envjs;
-	require('local_settings');
-
-var __context__ = Packages.org.mozilla.javascript.Context.getCurrentContext();
-
-Envjs.platform       = "Rhino";
-Envjs.revision       = "1.7.0.rc2";
-Envjs.argv = [];
-if(__argv__ && __argv__.length){
-	for(var i = 0; i < __argv__.length; i++){
-		Envjs.argv[i] = __argv__[i];
-	}
-}
-
-Envjs.exit = function(){
-	java.lang.System.exit(0);
-};
-
-/*
- * Envjs rhino-env.1.3.pre03 
- * Pure JavaScript Browser Environment
- * By John Resig <http://ejohn.org/> and the Envjs Team
- * Copyright 2008-2010 John Resig, under the MIT License
- */
-
-//CLOSURE_START
-(function(){
-
-
-
-
-
-
-function __accessorDescriptor__(field, fun)
-{
-  var desc = { enumerable: true, configurable: true };
-  desc[field] = fun;
-  return desc;
-}
-
-/**
- * @author john resig
- */
-// Helper method for extending one object with another.
-function __extend__(a,b) {
-    for ( var i in b ) {
-        if(b.hasOwnProperty(i)){
-          var pd = Object.getOwnPropertyDescriptor(b, i);
-          var g = pd.get;
-          var s = pd.set;
-            if ( g || s ) {
-                if ( g ) { Object.defineProperty(a, i, __accessorDescriptor__("get",g)); }
-                if ( s ) { Object.defineProperty(a, i, __accessorDescriptor__("set",s)); }
-            } else {
-                a[i] = b[i];
-            }
-        }
-    } 
-    return a;
-}
-
-/**
- * Writes message to system out.
- *
- * @param {Object} message
- */
-(function(){
-	
-Envjs.log = print;
-
-Envjs.lineSource = function(e){
-    return e&&e.rhinoException?e.rhinoException.lineSource():"(line ?)";
-};
-
-var $in, log; 
-Envjs.readConsole = function(){
-	log = log||Envjs.logger('Envjs.Rhino');
-	$in = $in||new java.io.BufferedReader(
-		new java.io.InputStreamReader(java.lang.System['in'])
-	);
-	return  $in.readLine()+'';
-};
-Envjs.prompt = function(){
-  	java.lang.System.out.print(Envjs.CURSOR+' '); 
-	java.lang.System.out.flush();
-};
-
-}());
-
 
 (function(){
 
-var log = Envjs.logger('Envjs.HTML.Rhino');
-
-Envjs.eval = function(context, source, name){
-    //console.log('evaluating javascript source %s', source.substring(0,64));
-	return  __context__.evaluateString(
-        context,
-        source,
-        name,
-        0,
-        null
-    );
-};
-
-}());Envjs.renderSVG = function(svgstring, url){
-    //console.log("svg template url %s", templateSVG);
-    // Create a JPEG transcoder
-    var t = new Packages.org.apache.batik.transcoder.image.JPEGTranscoder();
-
-    // Set the transcoding hints.
-    t.addTranscodingHint(
-        Packages.org.apache.batik.transcoder.image.JPEGTranscoder.KEY_QUALITY,
-        new java.lang.Float(1.0));
-    // Create the transcoder input.
-    var input = new Packages.org.apache.batik.transcoder.TranscoderInput(
-        new java.io.StringReader(svgstring));
-
-    // Create the transcoder output.
-    var ostream = new java.io.ByteArrayOutputStream();
-    var output = new Packages.org.apache.batik.transcoder.TranscoderOutput(ostream);
-
-    // Save the image.
-    t.transcode(input, output);
-
-    // Flush and close the stream.
-    ostream.flush();
-    ostream.close();
-    
-	var out = new java.io.FileOutputStream(new java.io.File(new java.net.URI(url.toString())));
-	try{
-    	out.write( ostream.toByteArray() );
-	}catch(e){
-		
-	}finally{
-    	out.flush();
-    	out.close();
-    }
-};
-(function(){
-
-var log = Envjs.logger('Envjs.Timer.Rhino');
-/**
- * Rhino provides a very succinct 'sync'
- * @param {Function} fn
- */
-try{
-    Envjs.sync = sync;
-    Envjs.spawn = spawn;
-	//print('sync and spawn are available');
-} catch(e){	
-	//print('sync and spawn are not available : ' + e);
-    //sync unavailable on AppEngine
-    Envjs.sync = function(fn){
-        console.log('Threadless platform, sync is safe');
-        return fn;
-    };
-
-    Envjs.spawn = function(fn){
-        console.log('Threadless platform, spawn shares main thread.');
-        return fn();
-    };
-};
-
-
-/**
- * sleep thread for specified duration
- * @param {Object} milliseconds
- */
-Envjs.sleep = function(milliseconds){
-    try{
-        return java.lang.Thread.currentThread().sleep(milliseconds);
-    }catch(e){
-        console.log('Threadless platform, cannot sleep.');
-    }
-};
-
-/**
- * provides callback hook for when the system exits
- */
-Envjs.onExit = function(callback){
-    var rhino = Packages.org.mozilla.javascript,
-        contextFactory =  __context__.getFactory(),
-        listener = new rhino.ContextFactory.Listener({
-            contextReleased: function(context){
-                if(context === __context__)
-                    console.log('context released', context);
-                contextFactory.removeListener(this);
-                if(callback)
-                    callback();
-            }
-        });
-    contextFactory.addListener(listener);
-};
-
-}());
-(function(){
-
-var log = Envjs.logger('Envjs.XMLHttpRequest.Rhino');
+var log = Envjs.logger('Envjs.XMLHttpRequest.Nashorn');
 
 /**
  * Get 'Current Working Directory'
@@ -291,7 +88,7 @@ Envjs.deleteFile = function(url){
  * @param {Object} data
  */
 Envjs.connection = function(xhr, responseHandler, data){
-    var url = java.net.URL(xhr.url),
+    var url = new java.net.URL(xhr.url),
         connection,
         header,
         outstream,
@@ -310,7 +107,7 @@ Envjs.connection = function(xhr, responseHandler, data){
     } else {
         connection = url.openConnection();
         //handle redirects manually since cookie support sucks out of the box
-        connection.setFollowRedirects(false);
+        //connection.setFollowRedirects(false);
         connection.setRequestMethod( xhr.method );
 
         // Add headers to Java connection
@@ -420,52 +217,4 @@ Envjs.connection = function(xhr, responseHandler, data){
     }
 };
 
-}());
-
-
-(function(){
-
-var log = Envjs.logger('Envjs.Window.Rhino');
-
-//Since we're running in rhino I guess we can safely assume
-//java is 'enabled'.  I'm sure this requires more thought
-//than I've given it here
-Envjs.javaEnabled = true;
-
-Envjs.homedir        = java.lang.System.getProperty("user.home");
-Envjs.tmpdir         = java.lang.System.getProperty("java.io.tmpdir");
-Envjs.os_name        = java.lang.System.getProperty("os.name");
-Envjs.os_arch        = java.lang.System.getProperty("os.arch");
-Envjs.os_version     = java.lang.System.getProperty("os.version");
-Envjs.lang           = java.lang.System.getProperty("user.lang");
-
-
-Envjs.gc = function(){ gc(); };
-
-/**
- * Makes an object window-like by proxying object accessors
- * @param {Object} scope
- * @param {Object} parent
- */
-Envjs.proxy = function(scope, parent) {
-    try{
-        if(scope+'' == '[object global]'){
-            return scope;
-        }else{
-            return  __context__.initStandardObjects();
-        }
-    }catch(e){
-        console.log('failed to init standard objects %s %s \n%s', scope, parent, e);
-    }
-
-};
-
-}());
-/**
- * @author john resig & the envjs team
- * @uri http://www.envjs.com/
- * @copyright 2008-2010
- * @license MIT
- */
-//CLOSURE_END
 }());

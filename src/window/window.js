@@ -338,7 +338,8 @@ exports.Window = Window = function(scope, parent, opener){
 
 };
 
-//console.log('scheduling default window creation');
+console.log('scheduling default window creation');
+
 setTimeout(function(){
     var w = new Window(__this__);
     log.info('[ %s ]', window.navigator.userAgent);
@@ -346,6 +347,5 @@ setTimeout(function(){
 
 }(/*Window*/));
 
-
-//console.log('starting Envjs.eventLoop');
-Envjs.eventLoop();
+console.log('starting Envjs.eventLoop');
+//Envjs.eventLoop();

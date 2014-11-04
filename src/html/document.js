@@ -266,11 +266,10 @@ __extend__(HTMLDocument.prototype, {
         }
         return null;
     },
-    set body() {
-        /* in firefox this is a benevolent do nothing*/
-        console.log('set body');
-    },
-
+//    set body() {
+//        /** in firefox this is a benevolent do nothing*/
+//        console.log('set body');
+//    },
     get cookie(){
         return Envjs.getCookies(this.location+'');
     },

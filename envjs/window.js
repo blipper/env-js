@@ -37,6 +37,14 @@ var Envjs               = Envjs             || require('envjs/platform/core').En
 
 
 
+
+function __accessorDescriptor__(field, fun)
+{
+  var desc = { enumerable: true, configurable: true };
+  desc[field] = fun;
+  return desc;
+}
+
 /**
  * @author john resig
  */
@@ -44,10 +52,12 @@ var Envjs               = Envjs             || require('envjs/platform/core').En
 function __extend__(a,b) {
     for ( var i in b ) {
         if(b.hasOwnProperty(i)){
-            var g = b.__lookupGetter__(i), s = b.__lookupSetter__(i);
+          var pd = Object.getOwnPropertyDescriptor(b, i);
+          var g = pd.get;
+          var s = pd.set;
             if ( g || s ) {
-                if ( g ) { a.__defineGetter__(i, g); }
-                if ( s ) { a.__defineSetter__(i, s); }
+                if ( g ) { Object.defineProperty(a, i, __accessorDescriptor__("get",g)); }
+                if ( s ) { Object.defineProperty(a, i, __accessorDescriptor__("set",s)); }
             } else {
                 a[i] = b[i];
             }
@@ -842,7 +852,8 @@ exports.Window = Window = function(scope, parent, opener){
 
 };
 
-//console.log('scheduling default window creation');
+console.log('scheduling default window creation');
+
 setTimeout(function(){
     var w = new Window(__this__);
     log.info('[ %s ]', window.navigator.userAgent);
@@ -850,9 +861,8 @@ setTimeout(function(){
 
 }(/*Window*/));
 
-
-//console.log('starting Envjs.eventLoop');
-Envjs.eventLoop();
+console.log('starting Envjs.eventLoop');
+//Envjs.eventLoop();
 
 /**
  * @author john resig & the envjs team
